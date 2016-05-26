@@ -78,7 +78,7 @@ class Job_BeamscUpload extends Omeka_Job_AbstractJob
             // Title is the original filename because there is no file element 
             // when we save an item. File metadata can be updated later.
             'track[title]' => $file->original_filename,
-            'track[asset_data]' => '@' . FILES_DIR . '/original/' . $file->filename,
+            'track[asset_data]' => $this->_curlFile($file->filename),
             'track[sharing]' => ($_POST['BeamscShareOnSoundCloud'] == '1') ? 'public' : 'private',
         );
 
@@ -89,5 +89,24 @@ class Job_BeamscUpload extends Omeka_Job_AbstractJob
         }
 
         $track = json_decode($response);
+    }
+
+    /**
+     * Return appropriate curl file resource
+     *
+     * PHP 5.5 deprecated curl's '@filepath' notation in favor of a new CURLFile object.
+     * With PHP 5.6+ CURLFiles are required and '@filepath' notation is removed.
+     *
+     * @param string $filename the file name
+     * @return CURLFile|string
+     */
+    private function _curlFile($filename)
+    {
+        $file_path = FILES_DIR . '/original/' . $filename;
+        if (function_exists('curl_file_create')) {
+            return curl_file_create($file_path);
+        } else {
+            return '@' . $file_path;
+        }
     }
 }
